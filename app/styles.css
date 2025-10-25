@@ -1,0 +1,81 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+    background-color: #535353;
+    color: #fff;
+}
+
+#genFill {
+    display: block;
+    width: calc(100% - 20px);
+    margin: 10px auto;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#genFill:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+#genFill:disabled {
+    background-color: #333;
+    cursor: not-allowed;
+}
+
+#statusBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #333;
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 12px;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+#statusSection {
+    display: flex;
+    align-items: center;
+}
+
+#statusIndicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    margin-right: 6px;
+    background-color: gray;
+    vertical-align: middle;
+}
+
+#buttonSection {
+    display: flex;
+    align-items: center;
+}
+
+#startServer {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#startServer:hover {
+    background-color: #218838;
+}
