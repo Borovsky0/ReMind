@@ -10,6 +10,8 @@ function saveImageAndMaskImpl(imagePath, maskPath, resultPath) {
     try {
         var doc = app.activeDocument;
 
+        var initialLayerId = doc.activeLayer.id;
+
         var bounds = doc.selection.bounds;
         var left = bounds[0].as("px");
         var top = bounds[1].as("px");
@@ -42,6 +44,8 @@ function saveImageAndMaskImpl(imagePath, maskPath, resultPath) {
         blackLayer.remove();
 
         cropAndSaveFile(left, top, right, bottom, imagePath);
+
+        placeLayerAbove(initialLayerId);
     }
     catch (error) {
         alert("Error: " + error)
@@ -78,6 +82,17 @@ function placeImageAsRasterImpl(path) {
     catch (error) {
         alert("Error: " + error)
     }
+}
+
+function placeLayerAbove(layerId)
+{
+    var ref = new ActionReference();
+    ref.putIdentifier(charIDToTypeID("Lyr "), layerId);
+
+    var desc = new ActionDescriptor();
+    desc.putReference(charIDToTypeID("null"), ref);
+
+    executeAction(charIDToTypeID("slct"), desc, DialogModes.NO);
 }
 
 function cropAndSaveFile(left, top, right, bottom, path) {

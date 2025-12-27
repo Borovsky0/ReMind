@@ -19,60 +19,62 @@ document.addEventListener("DOMContentLoaded", function () {
         csInterface.evalScript(`startServer("${MODEL}", "${DEVICE}", "${PORT}")`);
     });
 
-    genFillButton.addEventListener("click", function () {
-
-        checkSelectionAvailable(function (hasSelection) {
-            if (!hasSelection) {
-                alert("Отсутствует область выделения");
-                return;
-            }
-
-            generativeFill();
-        });
-    });
+    genFillButton.addEventListener("click", generativeFill);
 
     startServerStatusPolling();
 });
 
 function generativeFill() {
-    var extensionPath = csInterface.getSystemPath(SystemPath.EXTENSION);
-    var timestamp = Date.now();
-    var imagePathPNG = extensionPath + "/app/image_" + timestamp + ".png";
-    var maskPathPNG = extensionPath + "/app/mask_" + timestamp + ".png";
-    var resultPath = extensionPath + "/app/result_" + timestamp;
+    if (!serverAvailable) {
+        alert("Сервер недоступен. Запустите сервер перед использованием функции.");
+        return;
+    }
 
-    csInterface.evalScript(`saveImageAndMask("${imagePathPNG}","${maskPathPNG}","${resultPath}")`, function () {
-        const b64_img = imageToBase64(imagePathPNG);
-        const b64_mask = imageToBase64(maskPathPNG);
+    checkSelectionAvailable(function (hasSelection) {
+        if (!hasSelection) {
+            alert("Отсутствует область выделения");
+            return;
+        }
 
-        const data = {
-            image: b64_img,
-            mask: b64_mask
-        };
+        var extensionPath = csInterface.getSystemPath(SystemPath.EXTENSION);
+        var timestamp = Date.now();
+        var imagePathPNG = extensionPath + "/app/image_" + timestamp + ".png";
+        var maskPathPNG = extensionPath + "/app/mask_" + timestamp + ".png";
+        var resultPath = extensionPath + "/app/result_" + timestamp;
 
-        fetch(`http://${HOST}:${PORT}${API_GENERATIVE_FILL}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-            .then(response => response.arrayBuffer())
-            .then(buffer => {
-                const uint8Array = new Uint8Array(buffer);
-                const binaryString = uint8Array.reduce((data, byte) => data + String.fromCharCode(byte), '');
-                const val = window.btoa(binaryString);
-                window.cep.fs.writeFile(resultPath + ".png", val, cep.encoding.Base64);
+        csInterface.evalScript(`saveImageAndMask("${imagePathPNG}","${maskPathPNG}","${resultPath}")`, function () {
+            const b64_img = imageToBase64(imagePathPNG);
+            const b64_mask = imageToBase64(maskPathPNG);
 
-                csInterface.evalScript(`placeImageAsRaster("${resultPath}")`);
+            const data = {
+                image: b64_img,
+                mask: b64_mask
+            };
+
+            fetch(`http://${HOST}:${PORT}${API_GENERATIVE_FILL}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             })
-            .catch(error => {
-                alert("IOPaint API error - " + API_GENERATIVE_FILL + ": " + error);
-            })
-            .finally(() => {
-                csInterface.evalScript(`deleteFile("${imagePathPNG}")`);
-                csInterface.evalScript(`deleteFile("${maskPathPNG}")`);
-                csInterface.evalScript(`deleteFile("${resultPath}.png")`);
-                csInterface.evalScript(`deleteFile("${resultPath}.txt")`);
-            });
+                .then(response => response.arrayBuffer())
+                .then(buffer => {
+                    const uint8Array = new Uint8Array(buffer);
+                    const binaryString = uint8Array.reduce((data, byte) => data + String.fromCharCode(byte), '');
+                    const val = window.btoa(binaryString);
+                    window.cep.fs.writeFile(resultPath + ".png", val, cep.encoding.Base64);
+
+                    csInterface.evalScript(`placeImageAsRaster("${resultPath}")`);
+                })
+                .catch(error => {
+                    alert("IOPaint API error - " + API_GENERATIVE_FILL + ": " + error);
+                })
+                .finally(() => {
+                    csInterface.evalScript(`deleteFile("${imagePathPNG}")`);
+                    csInterface.evalScript(`deleteFile("${maskPathPNG}")`);
+                    csInterface.evalScript(`deleteFile("${resultPath}.png")`);
+                    csInterface.evalScript(`deleteFile("${resultPath}.txt")`);
+                });
+        });
     });
 }
 
