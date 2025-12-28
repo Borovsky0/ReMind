@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>ReMind</title>
@@ -7,16 +8,38 @@
   <script src="CSInterface.js"></script>
   <script src="index.js"></script>
 </head>
+
 <body>
-  <button id="genFill" disabled>Заливка</button>
-  <div id="statusBar">
-    <div id="statusSection">
-      <span id="statusIndicator"></span>
-      <span id="statusText">Проверка соединения...</span>
+  <div id="mainView">
+    <div id="mainContent" class="content">
+      <button id="genFill" class="bigButton" disabled>Заливка</button>
+      <button id="startServer" class="bigButton">Запустить сервер</button>
     </div>
-    <div id="buttonSection">
-      <button id="startServer">Запустить сервер</button>
+    <div id="statusBar">
+      <div id="statusLeft">
+        <span id="statusIndicator"></span>
+        <span id="statusText">Проверка соединения...</span>
+      </div>
+      <div id="statusRight">
+        <button id="openSettings" class="smallButton">⚙</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsView" style="display:none;">
+    <div class="settingsHeader">
+      <button id="backButton" class="smallButton">◀️</button>
+      <span class="settingsTitle">Настройки</span>
+      <div style="width: 40px;"></div>
+    </div>
+    <div class="content">
+      <div class="settingsLabel">Устройство генерации</div>
+      <select id="deviceSelect">
+        <option value="cuda">GPU (CUDA)</option>
+        <option value="cpu">CPU</option>
+      </select>
     </div>
   </div>
 </body>
+
 </html>
