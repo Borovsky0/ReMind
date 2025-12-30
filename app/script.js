@@ -123,9 +123,9 @@ function deleteFile(path) {
     if (file.exists) { file.remove(); }
 }
 
-function startServer(model, device, port) {
+function startServer(path, model, device, port) {
     try {
-        var cmd = 'start "" /B cmd /C "iopaint start --model=' + model + ' --device=' + device + ' --port=' + port + '"';
+        var cmd = 'start "" /B cmd /C "python ' + path + ' --model=' + model + ' --device=' + device + ' --port=' + port + '"';
         app.system(cmd);
     } catch (e) {
         alert("Error starting server: " + e);

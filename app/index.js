@@ -3,15 +3,15 @@ var csInterface = new CSInterface();
 const HOST = 'localhost';
 const MODEL = 'lama';
 const PORT = '7458';
-const API_GENERATIVE_FILL = '/api/v1/inpaint';
-const API_SERVER_CONFIG = '/api/v1/server-config';
+const API_GENERATIVE_FILL = '/inpaint';
+const API_HEALTH = '/health';
 const CHECK_INTERVAL = 2000;
 
-let serverAvailable = false;
+var EXTENSION_PATH = csInterface.getSystemPath(SystemPath.EXTENSION);
 let DEVICE = localStorage.getItem('device') || 'cpu';
+let serverAvailable = false;
 
 document.addEventListener("DOMContentLoaded", function () {
-
     const genFillButton = document.getElementById("genFill");
     const startServerButton = document.getElementById("startServer");
     const openSettingsButton = document.getElementById("openSettings");
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
     genFillButton.addEventListener("click", generativeFill);
 
     startServerButton.addEventListener("click", function () {
-        callScript("startServer", [MODEL, DEVICE, PORT]);
+        callScript("startServer", [EXTENSION_PATH + '/app/server.py', MODEL, DEVICE, PORT]);
     });
 
     openSettingsButton.addEventListener("click", function () {
@@ -60,11 +60,10 @@ function generativeFill() {
             return;
         }
 
-        var extensionPath = csInterface.getSystemPath(SystemPath.EXTENSION);
         var timestamp = Date.now();
-        var imagePathPNG = extensionPath + "/app/image_" + timestamp + ".png";
-        var maskPathPNG = extensionPath + "/app/mask_" + timestamp + ".png";
-        var resultPath = extensionPath + "/app/result_" + timestamp;
+        var imagePathPNG = EXTENSION_PATH + "/app/image_" + timestamp + ".png";
+        var maskPathPNG = EXTENSION_PATH + "/app/mask_" + timestamp + ".png";
+        var resultPath = EXTENSION_PATH + "/app/result_" + timestamp;
 
         callScript(
             "saveImageAndMask",
@@ -82,31 +81,31 @@ function generativeFill() {
                         mask: b64_mask
                     })
                 })
-                .then(r => r.arrayBuffer())
-                .then(buffer => {
-                    const uint8Array = new Uint8Array(buffer);
-                    const binaryString = uint8Array.reduce(
-                        (data, byte) => data + String.fromCharCode(byte), ""
-                    );
+                    .then(r => r.arrayBuffer())
+                    .then(buffer => {
+                        const uint8Array = new Uint8Array(buffer);
+                        const binaryString = uint8Array.reduce(
+                            (data, byte) => data + String.fromCharCode(byte), ""
+                        );
 
-                    const base64 = window.btoa(binaryString);
-                    window.cep.fs.writeFile(
-                        resultPath + ".png",
-                        base64,
-                        cep.encoding.Base64
-                    );
+                        const base64 = window.btoa(binaryString);
+                        window.cep.fs.writeFile(
+                            resultPath + ".png",
+                            base64,
+                            cep.encoding.Base64
+                        );
 
-                    callScript("placeImageAsRaster", [resultPath]);
-                })
-                .catch(err => {
-                    alert("IOPaint API error: " + err);
-                })
-                .finally(() => {
-                    callScript("deleteFile", [imagePathPNG]);
-                    callScript("deleteFile", [maskPathPNG]);
-                    callScript("deleteFile", [resultPath + ".png"]);
-                    callScript("deleteFile", [resultPath + ".txt"]);
-                });
+                        callScript("placeImageAsRaster", [resultPath]);
+                    })
+                    .catch(err => {
+                        alert("Inpainting API error: " + err);
+                    })
+                    .finally(() => {
+                        callScript("deleteFile", [imagePathPNG]);
+                        callScript("deleteFile", [maskPathPNG]);
+                        callScript("deleteFile", [resultPath + ".png"]);
+                        callScript("deleteFile", [resultPath + ".txt"]);
+                    });
             }
         );
     });
@@ -144,15 +143,14 @@ function startServerStatusPolling() {
     const genFillButton = document.getElementById("genFill");
     const startServerButton = document.getElementById("startServer");
 
-    function setStatus(status, msg) {
-        if (status === 1) {
-            serverAvailable = true;
+    function setStatus(available, msg) {
+        serverAvailable = available;
+        if (available) {
             indicator.style.backgroundColor = "limegreen";
             text.textContent = "Сервер подключен";
             genFillButton.disabled = false;
             startServerButton.style.display = "none";
         } else {
-            serverAvailable = false;
             indicator.style.backgroundColor = "red";
             text.textContent = msg || "Сервер недоступен";
             genFillButton.disabled = true;
@@ -162,16 +160,20 @@ function startServerStatusPolling() {
 
     async function checkServer() {
         try {
-            const response = await fetch(
-                `http://${HOST}:${PORT}${API_SERVER_CONFIG}`
-            );
+            const response = await fetch(`http://${HOST}:${PORT}${API_HEALTH}`, {
+                method: "GET"
+            });
 
-            response.ok
-                ? setStatus(1)
-                : setStatus(0, "Ошибка соединения");
-
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === "ok") {
+                    setStatus(true);
+                    return;
+                }
+            }
+            setStatus(false, "Сервер не отвечает корректно");
         } catch (e) {
-            setStatus(0, "Сервер недоступен");
+            setStatus(false, "Сервер недоступен");
         }
     }
 
