@@ -134,7 +134,8 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
         start_time = time.time()
         if self.path == "/health":
             self._send_json({"status": "ok", "message": "Server is running"})
-            log(f"GET /health {time.time() - start_time:.3f}s", "API")
+            if getattr(self.server, 'log_health', True):
+                log(f"GET /health {time.time() - start_time:.3f}s", "API")
             return
         if self.path == "/models":
             models_info = [
@@ -176,7 +177,9 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(png_data)
 
-            log(f"POST /inpaint {time.time() - start_time:.3f}s", "API")
+            mask_width, mask_height = mask.size
+
+            log(f"POST /inpaint ({mask_width}x{mask_height}) {time.time() - start_time:.3f}s", "API")
         except Exception as exc:
             log(f"POST /inpaint error: {exc}", "API")
             self.send_error(500, str(exc))
@@ -190,18 +193,21 @@ if __name__ == "__main__":
                         help="Model name (available: " + ", ".join(SUPPORTED_MODELS.keys()) + ")")
     parser.add_argument("--device", default="cuda", choices=["cpu", "cuda"],
                         help="Device: cpu or cuda")
+    parser.add_argument("--log_health", default="false", choices=["true", "false"],
+                        help="Log health requests")
     args = parser.parse_args()
 
-    device = torch.device("cuda" if args.device == "cuda" and torch.cuda.is_available() else "cpu")
     os.makedirs(MODELS_DIR, exist_ok=True)
 
+    device = torch.device("cuda" if args.device == "cuda" and torch.cuda.is_available() else "cpu")
     inpaint_model = InpaintModel(args.model, device)
+    log_health = args.log_health.lower() == "true" 
 
     log(f"Using device: {device} \033[90m(PyTorch {torch.__version__})\033[0m")
     log(f"Using model: {inpaint_model.model_name} \033[90m({inpaint_model.model_path})\033[0m")
-
     log(f"Server running on http://localhost:{args.port} \033[90m(Startup time: {(time.time() - start_time_script):.3f}s)\033[0m")
 
     handler = lambda *a, **kw: APIHandler(*a, model=inpaint_model, **kw)
     with socketserver.TCPServer(("", args.port), handler) as httpd:
+        httpd.log_health = log_health
         httpd.serve_forever()

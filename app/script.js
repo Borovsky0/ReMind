@@ -123,9 +123,9 @@ function deleteFile(path) {
     if (file.exists) { file.remove(); }
 }
 
-function startServer(path, model, device, port) {
+function startServer(path, model, device, port, logHealth) {
     try {
-        var cmd = 'start "" /B cmd /C "python ' + path + ' --model=' + model + ' --device=' + device + ' --port=' + port + '"';
+        var cmd = 'start "" /B cmd /C "python ' + path + ' --model=' + model + ' --device=' + device + ' --port=' + port + ' --log_health=' + logHealth + '"';
         app.system(cmd);
     } catch (e) {
         alert("Error starting server: " + e);

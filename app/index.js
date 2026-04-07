@@ -9,6 +9,7 @@ const CHECK_INTERVAL = 2000;
 
 var EXTENSION_PATH = csInterface.getSystemPath(SystemPath.EXTENSION);
 let DEVICE = localStorage.getItem('device') || 'cpu';
+let LOG_HEALTH = localStorage.getItem("logHealth") || "false";
 let serverAvailable = false;
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -18,15 +19,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const mainView = document.getElementById("mainView");
     const settingsView = document.getElementById("settingsView");
     const deviceSelect = document.getElementById("deviceSelect");
+    const logHealthSelect = document.getElementById("logHealthSelect");
     const backButton = document.getElementById("backButton");
 
     deviceSelect.value = DEVICE;
     startServerButton.textContent = `Запустить сервер (${DEVICE === "cuda" ? "GPU" : "CPU"})`;
 
+    logHealthSelect.value = LOG_HEALTH;
+
     genFillButton.addEventListener("click", generativeFill);
 
     startServerButton.addEventListener("click", function () {
-        callScript("startServer", [EXTENSION_PATH + '/app/server.py', MODEL, DEVICE, PORT]);
+        callScript("startServer", [EXTENSION_PATH + '/app/server.py', MODEL, DEVICE, PORT, LOG_HEALTH]);
     });
 
     openSettingsButton.addEventListener("click", function () {
@@ -43,6 +47,11 @@ document.addEventListener("DOMContentLoaded", function () {
         DEVICE = this.value;
         startServerButton.textContent = `Запустить сервер (${DEVICE === "cuda" ? "GPU" : "CPU"})`;
         localStorage.setItem("device", DEVICE);
+    });
+
+    logHealthSelect.addEventListener("change", function () {
+        LOG_HEALTH = this.value;
+        localStorage.setItem("logHealth", LOG_HEALTH);
     });
 
     startServerStatusPolling();

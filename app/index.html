@@ -34,9 +34,14 @@
     </div>
     <div class="content">
       <div class="settingsLabel">Устройство генерации</div>
-      <select id="deviceSelect">
+      <select class="settingsSelect" id="deviceSelect">
         <option value="cuda">GPU (CUDA)</option>
         <option value="cpu">CPU</option>
+      </select>
+      <div class="settingsLabel">Отображать health в логах</div>
+      <select class="settingsSelect" id="logHealthSelect">
+        <option value="true">Да</option>
+        <option value="false">Нет</option>
       </select>
     </div>
   </div>
