@@ -20,6 +20,8 @@ SUPPORTED_MODELS = {
     },
 }
 
+MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models" )
+
 def log(message: str, log_type: str = "INFO"):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if log_type == "INFO":
@@ -75,13 +77,9 @@ class InpaintModel:
         config = SUPPORTED_MODELS[model_name]
         self.model_name = model_name
 
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        os.makedirs(MODELS_DIR, exist_ok=True)
 
-        app_parent_dir = os.path.dirname(script_dir)
-        models_dir = os.path.join(app_parent_dir, "models")
-        os.makedirs(models_dir, exist_ok=True)
-
-        local_path = os.path.join(models_dir, config["filename"])
+        local_path = os.path.join(MODELS_DIR, config["filename"])
 
         if not os.path.exists(local_path):
             download_with_progress(config["url"], local_path)
@@ -142,7 +140,7 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
             models_info = [
                 {
                     "name": name,
-                    "installed": os.path.exists(os.path.join("models", cfg["filename"]))
+                    "installed": os.path.exists(os.path.join(MODELS_DIR, cfg["filename"]))
                 }
                 for name, cfg in SUPPORTED_MODELS.items()
             ]
@@ -195,7 +193,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     device = torch.device("cuda" if args.device == "cuda" and torch.cuda.is_available() else "cpu")
-    os.makedirs("models", exist_ok=True)
+    os.makedirs(MODELS_DIR, exist_ok=True)
 
     inpaint_model = InpaintModel(args.model, device)
 
