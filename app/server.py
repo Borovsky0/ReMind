@@ -2,7 +2,6 @@ import os
 import argparse
 import base64
 import io
-from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 import http.server
 import socketserver
@@ -15,8 +14,12 @@ from PIL import Image
 
 SUPPORTED_MODELS = {
     "lama": {
-        "filename": "big-lama.pt",
-        "url": "https://github.com/Borovsky0/models/releases/download/lama/big-lama.pt"
+        "filename": "lama.pt",
+        "url": "https://github.com/Borovsky0/models/releases/download/lama/lama.pt"
+    },
+    "lama_anime": {
+        "filename": "lama_anime.pt",
+        "url": "https://github.com/Borovsky0/models/releases/download/lama_anime/lama_anime.pt"
     },
 }
 
@@ -136,17 +139,6 @@ class APIHandler(http.server.BaseHTTPRequestHandler):
             self._send_json({"status": "ok", "message": "Server is running"})
             if getattr(self.server, 'log_health', True):
                 log(f"GET /health {time.time() - start_time:.3f}s", "API")
-            return
-        if self.path == "/models":
-            models_info = [
-                {
-                    "name": name,
-                    "installed": os.path.exists(os.path.join(MODELS_DIR, cfg["filename"]))
-                }
-                for name, cfg in SUPPORTED_MODELS.items()
-            ]
-            self._send_json({"models": models_info})
-            log(f"GET /models {time.time() - start_time:.3f}s", "API")
             return
         self.send_error(404, "Not Found")
 

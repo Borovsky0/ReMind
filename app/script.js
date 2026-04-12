@@ -131,3 +131,21 @@ function startServer(path, model, device, port, logHealth) {
         alert("Error starting server: " + e);
     }
 }
+
+function getAvailableModels(extPath) {
+    var MODELS = [
+        { name: "lama", label: "LaMa", file: "lama.pt" },
+        { name: "lama_anime", label: "LaMa Anime", file: "lama_anime.pt" }
+    ];
+
+    var result = [];
+
+    for (var i = 0; i < MODELS.length; i++) {
+        var model = MODELS[i];
+        var file = new File(extPath + "/models/" + model.file);
+        var installed = file.exists ? "1" : "0";
+        result.push(model.name + "|" + model.label + "|" + installed);
+    }
+
+    return result.join(";");
+}

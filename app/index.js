@@ -1,7 +1,6 @@
 var csInterface = new CSInterface();
 
 const HOST = 'localhost';
-const MODEL = 'lama';
 const PORT = '7458';
 const API_GENERATIVE_FILL = '/inpaint';
 const API_HEALTH = '/health';
@@ -9,6 +8,7 @@ const CHECK_INTERVAL = 2000;
 
 var EXTENSION_PATH = csInterface.getSystemPath(SystemPath.EXTENSION);
 let DEVICE = localStorage.getItem('device') || 'cpu';
+let MODEL = localStorage.getItem('model') || 'lama';
 let LOG_HEALTH = localStorage.getItem("logHealth") || "false";
 let serverAvailable = false;
 
@@ -19,11 +19,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const mainView = document.getElementById("mainView");
     const settingsView = document.getElementById("settingsView");
     const deviceSelect = document.getElementById("deviceSelect");
+    const modelSelect = document.getElementById("modelSelect");
     const logHealthSelect = document.getElementById("logHealthSelect");
     const backButton = document.getElementById("backButton");
 
     deviceSelect.value = DEVICE;
-    startServerButton.textContent = `Запустить сервер (${DEVICE === "cuda" ? "GPU" : "CPU"})`;
+    startServerButton.textContent = `Запустить сервер (${DEVICE === "cuda" ? "GPU" : "CPU"}, ${MODEL})`;
 
     logHealthSelect.value = LOG_HEALTH;
 
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     openSettingsButton.addEventListener("click", function () {
+        loadAvailableModels();
         mainView.style.display = "none";
         settingsView.style.display = "block";
     });
@@ -45,8 +47,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     deviceSelect.addEventListener("change", function () {
         DEVICE = this.value;
-        startServerButton.textContent = `Запустить сервер (${DEVICE === "cuda" ? "GPU" : "CPU"})`;
         localStorage.setItem("device", DEVICE);
+        updateStartButtonText();
+    });
+
+    modelSelect.addEventListener("change", function () {
+        MODEL = this.value;
+        localStorage.setItem("model", MODEL);
+        updateStartButtonText();
     });
 
     logHealthSelect.addEventListener("change", function () {
@@ -55,7 +63,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     startServerStatusPolling();
+    loadAvailableModels();
 });
+
+function updateStartButtonText() {
+    const startServerButton = document.getElementById("startServer");
+
+    startServerButton.textContent =
+        `Запустить сервер (${DEVICE === "cuda" ? "GPU" : "CPU"}, ${MODEL})`;
+}
 
 function generativeFill() {
     if (!serverAvailable) {
@@ -188,4 +204,43 @@ function startServerStatusPolling() {
 
     checkServer();
     setInterval(checkServer, CHECK_INTERVAL);
+}
+
+function loadAvailableModels() {
+    const modelSelect = document.getElementById("modelSelect");
+
+    callScript("getAvailableModels", [EXTENSION_PATH], function (result) {
+        const models = result
+            .split(";")
+            .filter(Boolean)
+            .map(item => {
+                const [name, label, installed] = item.split("|");
+
+                return {
+                    name,
+                    label,
+                    installed: installed === "1"
+                };
+            });
+
+        modelSelect.innerHTML = "";
+
+        models.forEach(m => {
+            const option = document.createElement("option");
+            option.value = m.name;
+            option.textContent = m.installed? m.label : `${m.label} (не установлена)`;
+
+            modelSelect.appendChild(option);
+        });
+
+        const saved = localStorage.getItem("model");
+
+        if (saved) {
+            modelSelect.value = saved;
+        } else if (models.length > 0) {
+            modelSelect.value = models[0].name;
+        }
+
+        MODEL = modelSelect.value;
+    });
 }

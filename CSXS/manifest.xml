@@ -30,8 +30,8 @@
 					<Menu>ReMind</Menu>
 					<Geometry>
 						<Size>
-							<Height>200</Height>
-							<Width>200</Width>
+							<Height>250</Height>
+							<Width>250</Width>
 						</Size>
 					</Geometry>
 				</UI>
