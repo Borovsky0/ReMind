@@ -123,6 +123,27 @@ function deleteFile(path) {
     if (file.exists) { file.remove(); }
 }
 
+function ensureFolderExists(path) {
+    var folder = new Folder(path);
+    if (!folder.exists) {
+        folder.create();
+    }
+}
+
+function clearFolder(path) {
+    var folder = new Folder(path);
+    if (!folder.exists) return;
+
+    var files = folder.getFiles();
+    for (var i = 0; i < files.length; i++) {
+        try {
+            files[i].remove();
+        } catch (e) {
+            alert("Error deleting temp files: " + e);
+        }
+    }
+}
+
 function startServer(path, model, device, port, logHealth) {
     try {
         var cmd = 'start "" /B cmd /C "python ' + path + ' --model=' + model + ' --device=' + device + ' --port=' + port + ' --log_health=' + logHealth + '"';

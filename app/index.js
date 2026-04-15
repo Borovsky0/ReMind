@@ -7,6 +7,7 @@ const API_HEALTH = '/health';
 const CHECK_INTERVAL = 2000;
 
 var EXTENSION_PATH = csInterface.getSystemPath(SystemPath.EXTENSION);
+var TMP_PATH = EXTENSION_PATH + "/app/tmp";
 let DEVICE = localStorage.getItem('device') || 'cpu';
 let MODEL = localStorage.getItem('model') || 'lama';
 let LOG_HEALTH = localStorage.getItem("logHealth") || "false";
@@ -32,6 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     startServerButton.addEventListener("click", function () {
         callScript("startServer", [EXTENSION_PATH + '/app/server.py', MODEL, DEVICE, PORT, LOG_HEALTH]);
+        callScript("clearFolder", [TMP_PATH]);
     });
 
     openSettingsButton.addEventListener("click", function () {
@@ -85,10 +87,12 @@ function generativeFill() {
             return;
         }
 
+        callScript("ensureFolderExists", [TMP_PATH]);
+
         var timestamp = Date.now();
-        var imagePathPNG = EXTENSION_PATH + "/app/image_" + timestamp + ".png";
-        var maskPathPNG = EXTENSION_PATH + "/app/mask_" + timestamp + ".png";
-        var resultPath = EXTENSION_PATH + "/app/result_" + timestamp;
+        var imagePathPNG = TMP_PATH + "/image_" + timestamp + ".png";
+        var maskPathPNG = TMP_PATH + "/mask_" + timestamp + ".png";
+        var resultPath = TMP_PATH + "/result_" + timestamp;
 
         callScript(
             "saveImageAndMask",
